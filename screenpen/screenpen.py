@@ -746,6 +746,13 @@ setattr(self, 'drawChart', drawChart)
             'yellow': COLORS['yellow'],
             'black': COLORS['black'],
             'white': COLORS['white'],
+
+            'darkRed': COLORS['darkRed'],
+            'darkGreen': COLORS['darkGreen'],
+            'darkBlue': COLORS['darkBlue'],
+            'darkCyan': COLORS['darkCyan'],
+            'darkMagenta': COLORS['darkMagenta'],
+
             'orange': _get_color_from_RGB(255, 165, 0),
             'gray': _get_color_from_RGB(128, 128, 128),
         }
