@@ -374,7 +374,8 @@ sys.modules['syntax'] = syntax
 spec.loader.exec_module(syntax)
 
 class ScreenPenWindow(QMainWindow):
-    def __init__(self, screen, screen_geom, pixmap: QtGui.QPixmap = None, transparent_background = True, icon_size = 50): # app: QApplication
+    def __init__(self, screen, screen_geom, pixmap: QtGui.QPixmap = None, transparent_background = True, icon_size = 50,
+                 hidden_menus=False): # app: QApplication
         super().__init__()
 
         # PATHS
@@ -396,6 +397,7 @@ class ScreenPenWindow(QMainWindow):
         self.screen_pixmap = pixmap
         self.screen_geom = screen_geom
         self.transparent_background = transparent_background
+        self.hidden_menus = hidden_menus
         self.icon_size = icon_size
 
         if self.transparent_background:
@@ -427,11 +429,15 @@ class ScreenPenWindow(QMainWindow):
         self._setupIcons()
         self._setupCodes()
         self._createToolBars()
+        if self.hidden_menus:
+            self.hide_menus()
 
         self.sc_undo = QShortcut(QKeySequence('Ctrl+Z'), self)
         self.sc_undo.activated.connect(self.undo)
         self.sc_redo = QShortcut(QKeySequence('Ctrl+Y'), self)
         self.sc_redo.activated.connect(self.redo)
+        self.sc_toggle_menus = QShortcut(QKeySequence('Ctrl+1'), self)
+        self.sc_toggle_menus.activated.connect(self.toggle_menus)
         self.sc_quit_program = QShortcut(QKeySequence('Escape'), self)
         self.sc_quit_program.activated.connect(self.quit_program)
 
@@ -882,6 +888,9 @@ setattr(self, 'drawChart', drawChart)
     def mousePressEvent(self, event):
         if event.button() == BUTTONS['right']:
             sys.exit(0)
+
+        if event.button() == BUTTONS['middle']:
+            self.toggle_menus()
             
         if event.button() == BUTTONS['left'] and self.childAt(event.pos()) is None:
             self.drawing = True
@@ -955,6 +964,21 @@ setattr(self, 'drawChart', drawChart)
         p = self.history.redo()
         self.drawPixmap(p)
         self.update()
+
+    def hide_menus(self):
+        for toolbar in self.toolBars:
+            toolbar.hide()
+
+    def show_menus(self):
+        for toolbar in self.toolBars:
+            toolbar.show()
+
+    def toggle_menus(self):
+        if self.hidden_menus:
+            self.show_menus()
+        else:
+            self.hide_menus()
+        self.hidden_menus = not self.hidden_menus
 
     def quit_program(self):
         sys.exit(0)
@@ -1088,9 +1112,10 @@ def main():
     parser.add_argument('-3', nargs='?', type=int, dest='screen', const='2')
     parser.add_argument('-t', '--transparent', dest='transparent', help='Force transparent background. If you are sure your WM support it.', action='store_true')
     parser.add_argument('-i', '--iconsize', type=int, dest='icon_size', help='Sets the icon size, default = 50', default=50)
+    parser.add_argument('-m', '--hidden', dest='hidden_menus', help='Start with hidden menus', action='store_true', default=False)
 
     args = parser.parse_args()
-    
+
     app = QApplication(sys.argv)
     _setPalette(app)
 
@@ -1114,9 +1139,11 @@ def main():
     screen, screen_geom, pixmap = screens[args.screen]
     
     use_transparency = args.transparent or _is_transparency_supported()
+    hidden_menus = args.hidden_menus
     
     window = ScreenPenWindow(screen=screen, screen_geom=screen_geom, pixmap=pixmap,
-                             transparent_background=use_transparency, icon_size=args.icon_size)
+                             transparent_background=use_transparency, icon_size=args.icon_size,
+                             hidden_menus=hidden_menus)
     sys.exit(_execute_dialog(app))
 
 if __name__ == '__main__':
